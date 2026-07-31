@@ -1,0 +1,1400 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0F151B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Quadra">
+<title>Quadra — prancheta de vôlei</title>
+<style>
+:root{
+  --ink:#0F151B; --panel:#18212B; --panel2:#222E3B; --line:#31404F;
+  --chalk:#EAF0F5; --muted:#8DA2B4;
+  --ball:#F2C230; --blue:#3A7FD5; --orange:#D4622A;
+  --teal:#17697F; --teal-dk:#125668; --sand:#D9A768; --sand-dk:#B9803F;
+  --ok:#4FB477; --bad:#E05B5B;
+  --accent:#F2C230; --accent-ink:#161206;
+  --r:14px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0; background:var(--ink); color:var(--chalk);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.45; overscroll-behavior-y:contain;}
+body{padding-bottom:calc(72px + var(--safe-b))}
+body.beach{--accent:#2FC2B4; --accent-ink:#03231F}
+h1,h2,h3{margin:0; font-weight:650; letter-spacing:-.01em}
+button,select,input{font:inherit; color:inherit}
+.eyebrow{font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--muted); font-weight:650}
+.net-rule{height:8px; background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 7px),
+  repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 7px); opacity:.7}
+
+/* ---------- header ---------- */
+header{position:sticky; top:0; z-index:40; background:rgba(15,21,27,.94); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line); padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 0}
+.brand{display:flex; align-items:baseline; gap:9px; margin-bottom:9px}
+.brand b{font-size:19px; letter-spacing:.16em; font-weight:800}
+.brand span{font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);align-self:center;
+  box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+nav{display:flex; gap:22px; justify-content:center}
+nav button{background:none; border:0; padding:0 0 10px; color:var(--muted); font-size:13px; font-weight:650;
+  letter-spacing:.06em; text-transform:uppercase; border-bottom:2px solid transparent; cursor:pointer}
+nav button[aria-selected=true]{color:var(--chalk); border-color:var(--accent)}
+
+main{padding:14px 12px 20px; max-width:760px; margin:0 auto}
+section[hidden]{display:none}
+[hidden]{display:none!important}
+
+/* ---------- chips / controls ---------- */
+.row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+.row.ctr{justify-content:center}
+.legend{justify-content:center}
+.swatches{justify-content:center}
+.group{display:flex; background:var(--panel); border:1px solid var(--line); border-radius:11px; padding:3px; gap:3px}
+.group button{background:none; border:0; border-radius:8px; padding:7px 11px; font-size:12.5px; font-weight:600;
+  color:var(--muted); cursor:pointer; white-space:nowrap}
+.group button[aria-pressed=true]{background:var(--panel2); color:var(--chalk); box-shadow:inset 0 0 0 1px var(--line)}
+.group button.hot[aria-pressed=true]{background:var(--accent); color:var(--accent-ink); box-shadow:none}
+.btn{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 12px;
+  font-size:12.5px; font-weight:650; cursor:pointer; color:var(--chalk)}
+.btn:active{transform:translateY(1px)}
+.btn.pri{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.btn.gho{background:transparent}
+.lbl{font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:650}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:13px}
+.stack{display:grid; gap:11px}
+
+/* ---------- court ---------- */
+.stage{position:relative; width:100%; margin:11px 0; border-radius:var(--r); overflow:hidden;
+  touch-action:none; user-select:none; -webkit-user-select:none}
+.stage.indoor{background:var(--orange)}
+.stage.beach{background:var(--sand-dk)}
+.court{position:absolute; inset:0; }
+.court i{position:absolute; background:#fff; opacity:.92}
+.floor{position:absolute; border-radius:2px}
+.stage.indoor .floor{background:var(--teal)}
+.stage.beach .floor{background:var(--sand)}
+.net.v{left:auto; right:auto; top:0; bottom:0; width:9px; height:auto;
+  transform:translateX(-50%); border:0; border-left:2px solid #fff; border-right:2px solid #fff}
+.net{position:absolute; left:0; right:0; height:9px; transform:translateY(-50%);
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 1.5px,transparent 1.5px 6px),
+             repeating-linear-gradient(0deg,rgba(255,255,255,.85) 0 1.5px,transparent 1.5px 6px);
+  border-top:2px solid #fff; border-bottom:2px solid #fff; z-index:3}
+canvas.draw{position:absolute; inset:0; z-index:4; touch-action:none; pointer-events:none}
+.stage.drawing .tok{pointer-events:none}
+.tok{position:absolute; z-index:5; width:38px; height:38px; margin:-19px 0 0 -19px; border-radius:50%;
+  display:grid; place-items:center; font-size:11.5px; font-weight:800; letter-spacing:-.03em;
+  box-shadow:0 2px 6px rgba(0,0,0,.45); cursor:grab; touch-action:none}
+.tok::before{content:''; position:absolute; inset:-9px; border-radius:50%}
+.tok.a{background:var(--accent); color:var(--accent-ink); border:2px solid rgba(255,255,255,.75)}
+.tok.b{background:#F2F6FA; color:#132030; border:2px solid var(--blue)}
+.tok.lib{background:var(--ok); color:#04210f; border:2px solid #d4f5e2}
+.tok.sel{outline:3px solid var(--blue); outline-offset:2px}
+.tok.ball{width:22px;height:22px;margin:-11px 0 0 -11px;background:#fff;border:2px solid var(--orange)}
+.tok small{position:absolute; top:37px; font-size:9px; font-weight:700; letter-spacing:.06em;
+  color:#fff; text-shadow:0 1px 3px #000; white-space:nowrap}
+.tok.anim{transition:left .55s cubic-bezier(.4,0,.2,1), top .55s cubic-bezier(.4,0,.2,1)}
+.ovl{position:absolute; inset:0; z-index:2; pointer-events:none}
+.ovl line,.ovl circle{vector-effect:non-scaling-stroke}
+.zonelab{position:absolute; z-index:2; font-size:11px; font-weight:800; color:rgba(255,255,255,.42);
+  transform:translate(-50%,-50%)}
+
+/* ---------- tools ---------- */
+.tools{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none;
+  justify-content:center; justify-content:safe center; align-items:center}
+.tools .sep{flex:0 0 auto; width:1px; height:26px; background:var(--line); margin:0 3px}
+.tool.act{background:var(--panel2); border-color:var(--line)}
+.tool.act:active{background:var(--accent)}
+.tool.act:active svg{stroke:var(--accent-ink)}
+.tools::-webkit-scrollbar{display:none}
+.tool{flex:0 0 auto; width:44px; height:44px; border-radius:11px; background:var(--panel);
+  border:1px solid var(--line); display:grid; place-items:center; cursor:pointer}
+.tool[aria-pressed=true]{background:var(--accent); border-color:var(--accent)}
+.tool[aria-pressed=true] svg{stroke:var(--accent-ink)}
+.tool svg{width:21px; height:21px; fill:none; stroke:var(--chalk); stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+.swatches{display:flex; gap:6px}
+.sw{width:26px; height:26px; border-radius:8px; border:2px solid transparent; cursor:pointer}
+.sw[aria-pressed=true]{border-color:#fff}
+
+/* ---------- frames ---------- */
+.frames{display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:center}
+.fchip{width:32px;height:32px;border-radius:9px;background:var(--panel);border:1px solid var(--line);
+  font-size:12px; font-weight:700; cursor:pointer}
+.fchip[aria-pressed=true]{background:var(--blue); border-color:var(--blue); color:#fff}
+
+/* ---------- rotations ---------- */
+.rotgrid{display:grid; gap:11px}
+.rotbar{display:flex; gap:6px; overflow-x:auto; scrollbar-width:none;
+  justify-content:center; justify-content:safe center}
+.rotbar::-webkit-scrollbar{display:none}
+.rchip{flex:0 0 auto; padding:8px 11px; border-radius:10px; background:var(--panel); border:1px solid var(--line);
+  font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap}
+.rchip[aria-pressed=true]{background:var(--chalk); color:var(--ink); border-color:var(--chalk)}
+.lineup{display:grid; grid-template-columns:repeat(3,1fr); gap:7px}
+.lineup label{display:grid; gap:3px}
+.lineup select{background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:7px; font-size:12.5px}
+.exp{display:grid; gap:9px}
+.exp .line{display:flex; gap:9px; align-items:flex-start; font-size:13.5px}
+.exp .k{flex:0 0 78px; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+  font-weight:700; padding-top:3px}
+.pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700;
+  background:var(--panel2); border:1px solid var(--line)}
+.pill.y{background:rgba(255,255,255,.09); border-color:var(--accent); color:var(--accent)}
+.pill.g{background:rgba(79,180,119,.16); border-color:rgba(79,180,119,.4); color:var(--ok)}
+.legend{display:flex; gap:12px; flex-wrap:wrap; font-size:11.5px; color:var(--muted); justify-content:center}
+.legend b{color:var(--chalk); font-weight:700}
+
+/* ---------- learn ---------- */
+details{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); overflow:hidden}
+details+details{margin-top:9px}
+summary{padding:13px 14px; cursor:pointer; font-weight:650; font-size:14.5px; list-style:none;
+  display:flex; justify-content:space-between; align-items:center; gap:10px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+"; color:var(--muted); font-size:19px; font-weight:400}
+details[open] summary::after{content:"–"}
+details[open] summary{border-bottom:1px solid var(--line)}
+.body{padding:12px 14px 15px; font-size:13.5px; color:#CBD8E3}
+.body p{margin:0 0 9px}
+.body ul{margin:0 0 9px; padding-left:18px}
+.body li{margin-bottom:5px}
+.body b,.body strong{color:var(--chalk)}
+.fault{display:grid; grid-template-columns:54px 1fr; gap:12px; align-items:start;
+  padding:13px 0; border-top:1px solid var(--line)}
+.fault:first-child{border-top:0; padding-top:4px}
+.fault .ic{background:var(--panel2); border:1px solid var(--line); border-radius:11px; padding:4px}
+.fault svg{display:block; width:100%; height:52px; fill:none; stroke:var(--chalk);
+  stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round}
+.fault svg .an{transform-box:view-box; animation-duration:2.4s; animation-iteration-count:infinite;
+  animation-timing-function:ease-in-out}
+.fault svg .an-sw{animation-name:sg-sw}
+.fault svg .an-rise{animation-name:sg-rise}
+.fault svg .an-pop{animation-name:sg-pop}
+.fault svg .an-slide{animation-name:sg-slide}
+.fault svg .an-tap{animation-name:sg-tap; animation-duration:1.5s}
+.fault svg .an-swing{animation-name:sg-swing; animation-duration:1.6s}
+.fault svg .an-spin{animation-name:sg-spin; animation-duration:2s; animation-timing-function:linear}
+.fault .ref{display:block; margin-top:6px; font-size:10px; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--muted); font-weight:650}
+@keyframes sg-sw{0%,18%{transform:rotate(var(--r,-40deg))}58%,100%{transform:rotate(0)}}
+@keyframes sg-rise{0%,18%{transform:translateY(9px);opacity:.3}58%,100%{transform:translateY(0);opacity:1}}
+@keyframes sg-pop{0%,28%{opacity:0;transform:scale(.4)}52%,100%{opacity:1;transform:scale(1)}}
+@keyframes sg-slide{0%,18%{transform:translateX(-14px)}62%,100%{transform:translateX(3px)}}
+@keyframes sg-swing{0%,100%{transform:rotate(-15deg)}50%{transform:rotate(2deg)}}
+@keyframes sg-tap{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+@keyframes sg-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.fault svg text{fill:var(--accent); stroke:none; font-weight:800}
+.fault b{display:block; font-size:14px; margin-bottom:3px}
+.fault p{margin:0 0 6px; font-size:13px; color:#C2D0DC}
+.fault .sg{display:block; font-size:12.5px; color:var(--accent); line-height:1.4}
+.fault .sg b{display:inline; color:var(--accent); font-size:12.5px}
+.zmap{display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin:10px 0; text-align:center}
+.zmap div{background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:9px 4px; font-size:12px}
+.zmap div b{display:block; font-size:17px}
+.zmap .net-cell{grid-column:1/-1; background:none; border:0; border-top:2px dashed var(--line); border-radius:0;
+  padding:0; height:1px; margin:2px 0 6px}
+.toast{position:fixed; left:50%; bottom:calc(84px + var(--safe-b)); transform:translateX(-50%);
+  background:var(--chalk); color:var(--ink); padding:9px 15px; border-radius:999px; font-size:12.5px;
+  font-weight:650; z-index:90; opacity:0; pointer-events:none; transition:opacity .2s}
+.toast.on{opacity:1}
+.hint{font-size:11.5px; color:var(--muted)}
+@media (min-width:900px){
+  body{padding-bottom:26px}
+  main{max-width:1200px; padding:16px 24px 26px}
+  header{padding-left:24px; padding-right:24px}
+  .cols{display:grid; grid-template-columns:minmax(0,1fr) 400px; gap:26px; align-items:start}
+  .colA{display:grid; gap:10px; align-content:start}
+  .colB{display:grid; gap:12px; position:sticky; top:104px}
+  .colB>.card{margin-top:0!important}
+  .stage{margin:0 auto!important}
+  #v-learn .body{display:grid; grid-template-columns:1fr 1fr; gap:0 26px}
+  #v-learn details+details{margin-top:11px}
+  .fault{grid-template-columns:58px 1fr}
+  .tools .tool{width:48px; height:46px}
+  .tools .tool svg{width:23px; height:23px}
+  .exp .k{flex:0 0 86px}
+}
+@media (min-width:1240px){
+  main{max-width:1320px}
+  .cols{grid-template-columns:minmax(0,1fr) 440px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}.fault svg .an{animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand" style="justify-content:space-between">
+    <span style="display:flex;align-items:baseline;gap:9px"><span class="dot"></span><b>QUADRA</b></span>
+    <div class="group" id="surfSel" style="padding:2px">
+      <button data-s="indoor" aria-pressed="true" class="hot">Quadra</button>
+      <button data-s="beach" aria-pressed="false" class="hot">Areia</button>
+    </div>
+  </div>
+  <nav id="tabs">
+    <button data-v="quadra" aria-selected="true">Quadra</button>
+    <button data-v="rot" aria-selected="false">Rotações</button>
+    <button data-v="learn" aria-selected="false">Aprender</button>
+  </nav>
+</header>
+
+<main>
+<!-- ============ QUADRA ============ -->
+<section id="v-quadra" class="cols">
+ <div class="colA">
+  <div class="row ctr" style="gap:12px">
+    <span class="lbl" id="surfTag">Quadra 18 × 9 m</span>
+    <div class="group" id="viewmode">
+      <button data-m="full" aria-pressed="true">Quadra inteira</button>
+      <button data-m="half" aria-pressed="false">Meia quadra</button>
+    </div>
+  </div>
+
+  <div class="row ctr" style="margin-top:9px; gap:14px">
+    <div class="row" style="gap:6px">
+      <span class="lbl">Nós</span>
+      <div class="group" id="cntA"></div>
+    </div>
+    <div class="row" style="gap:6px" id="bWrap">
+      <span class="lbl">Eles</span>
+      <div class="group" id="cntB"></div>
+    </div>
+  </div>
+
+  <div class="stage indoor" id="stage">
+    <div class="court" id="court"></div>
+    <canvas class="draw" id="cv"></canvas>
+  </div>
+
+  <div class="tools" id="tools">
+    <button class="tool" data-t="move" aria-pressed="true" title="Mover jogadores"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg></button>
+    <button class="tool" data-t="free" aria-pressed="false" title="Traço livre"><svg viewBox="0 0 24 24"><path d="M3 20c4-1 5-9 9-9s4 6 8 4"/><path d="M14 5l5 5"/></svg></button>
+    <button class="tool" data-t="arrow" aria-pressed="false" title="Deslocamento"><svg viewBox="0 0 24 24"><path d="M4 20L20 5"/><path d="M13 5h7v7"/></svg></button>
+    <button class="tool" data-t="ball" aria-pressed="false" title="Trajetória da bola"><svg viewBox="0 0 24 24"><path d="M4 20c6-14 12-14 16 0" stroke-dasharray="3 3"/><path d="M14 17l6 3-1-6"/></svg></button>
+    <button class="tool" data-t="line" aria-pressed="false" title="Linha reta"><svg viewBox="0 0 24 24"><path d="M4 20L20 4"/></svg></button>
+    <button class="tool" data-t="erase" aria-pressed="false" title="Apagar traço"><svg viewBox="0 0 24 24"><path d="M4 16l8-8 6 6-6 6H8z"/><path d="M4 21h16"/></svg></button>
+    <span class="sep"></span>
+    <button class="tool act" id="undo" title="Desfazer"><svg viewBox="0 0 24 24"><path d="M4 10h10a5 5 0 0 1 0 10H8"/><path d="M4 10l4-4M4 10l4 4"/></svg></button>
+  </div>
+
+  <p class="hint" id="toolHint" style="margin:8px 0 0; text-align:center">Modo mover: arraste as fichas com o dedo. Toque numa ficha para renomear.</p>
+  <div class="row ctr" style="margin-top:10px; gap:14px">
+    <div class="swatches" id="colors"></div>
+    <button class="btn gho" id="clearDraw">Limpar traços</button>
+  </div>
+
+ </div>
+ <div class="colB">
+  <div class="card" style="margin-top:11px" id="selPanel" hidden>
+    <div class="row ctr" style="gap:12px">
+      <div class="row" style="gap:7px">
+        <span class="lbl">Etiqueta</span>
+        <input id="selLabel" maxlength="3" style="width:62px; background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:7px; text-align:center; font-weight:700">
+      </div>
+      <div class="row" style="gap:6px">
+        <button class="btn gho" id="selLib">Líbero</button>
+        <button class="btn gho" id="selDel">Remover</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card stack" style="margin-top:11px">
+    <div class="row ctr" style="gap:10px">
+      <span class="eyebrow">Movimentação por quadros</span>
+      <span class="hint" id="fInfo">1 de 1</span>
+    </div>
+    <div class="frames" id="frames"></div>
+    <div class="row ctr">
+      <button class="btn" id="fAdd">+ Quadro</button>
+      <button class="btn" id="fDup">Duplicar</button>
+      <button class="btn" id="fDel">Excluir</button>
+      <button class="btn pri" id="fPlay">▶ Animar</button>
+    </div>
+    <p class="hint" style="margin:0; text-align:center">Cada quadro guarda as posições e os traços. Anime para ver a jogada acontecer.</p>
+  </div>
+
+  <div class="card stack" style="margin-top:11px">
+    <span class="eyebrow" style="text-align:center">Jogadas salvas</span>
+    <div class="row ctr">
+      <input id="playName" placeholder="Nome da jogada" style="flex:1; min-width:130px; background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:9px 11px">
+      <button class="btn pri" id="playSave">Salvar</button>
+    </div>
+    <div id="playList" class="stack"></div>
+    <div class="row ctr">
+      <button class="btn gho" id="exportPng">Exportar imagem</button>
+      <button class="btn gho" id="resetCourt">Reiniciar quadra</button>
+    </div>
+  </div>
+ </div>
+</section>
+
+<!-- ============ ROTAÇÕES ============ -->
+<section id="v-rot" hidden>
+  <div id="rotWrap" class="cols" style="margin-top:11px">
+   <div class="colA rotgrid">
+    <p class="hint" style="margin:0; text-align:center">Rodízio <b>5×1</b> — toque na rotação e depois na fase.</p>
+    <div class="rotbar" id="rotbar"></div>
+
+    <div class="group" id="phaseSel" style="width:100%">
+      <button data-p="recep" aria-pressed="true" style="flex:1">Recepção</button>
+      <button data-p="saque" aria-pressed="false" style="flex:1">Saque ou defesa</button>
+    </div>
+
+    <div class="stage indoor" id="rotStage">
+      <div class="court" id="rotCourt"></div>
+    </div>
+
+    <div class="row ctr" style="gap:14px">
+      <div class="legend">
+        <span><b>L</b> levantador</span><span><b>C</b> central</span>
+        <span><b>P</b> ponteiro</span><span><b>O</b> oposto</span>
+        <span><b>P1–P6</b> zonas</span>
+      </div>
+      <button class="btn pri" id="rotNext">Girar ↻</button>
+    </div>
+
+   </div>
+   <div class="colB">
+    <div class="card exp" id="rotExp"></div>
+
+    <div class="card row ctr" style="gap:12px">
+      <span class="lbl">Líbero em quadra</span>
+      <div class="group" id="libSel">
+        <button data-l="1" aria-pressed="true">Com líbero</button>
+        <button data-l="0" aria-pressed="false">Sem líbero</button>
+      </div>
+    </div>
+   </div>
+  </div>
+
+  <div id="praiaWrap" hidden class="cols" style="margin-top:11px">
+   <div class="colA rotgrid">
+    <div class="group" id="bPhase" style="width:100%; overflow-x:auto">
+      <button data-b="saque" aria-pressed="true">Nós sacando</button>
+      <button data-b="recep" aria-pressed="false">Recepção</button>
+      <button data-b="linha" aria-pressed="false">Bloqueio na linha</button>
+      <button data-b="diag" aria-pressed="false">Bloqueio na diagonal</button>
+      <button data-b="peel" aria-pressed="false">Sem bloqueio</button>
+    </div>
+    <div class="stage beach" id="bStage"><div class="court" id="bCourt"></div></div>
+    <div class="legend"><span><b>BLQ</b> bloqueador</span><span><b>DEF</b> defensor</span>
+      <span><b>ATK</b> atacante adversário</span></div>
+   </div>
+   <div class="colB">
+    <div class="card exp" id="bExp"></div>
+    <div id="bExtra" class="stack"></div>
+   </div>
+  </div>
+</section>
+
+<!-- ============ APRENDER ============ -->
+<section id="v-learn" hidden></section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   Quadra — prancheta de vôlei (offline, arquivo único)
+   ========================================================= */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),1700);}
+
+/* ---------- storage adapter (artifact -> localStorage -> memória) ---------- */
+const mem={};
+const store={
+  async get(k){
+    try{ if(window.storage){const r=await window.storage.get(k); return r?JSON.parse(r.value):null;} }catch(e){}
+    try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){}
+    return mem[k]??null;
+  },
+  async set(k,v){
+    try{ if(window.storage){await window.storage.set(k,JSON.stringify(v)); return;} }catch(e){}
+    try{ localStorage.setItem(k,JSON.stringify(v)); return; }catch(e){}
+    mem[k]=v;
+  }
+};
+
+/* =========================================================
+   1. QUADRA
+   ========================================================= */
+const COLORS=['#F2C230','#EAF0F5','#3A7FD5','#4FB477','#E05B5B','#D4622A'];
+const state={
+  surface:'indoor', view:'full', tool:'move', color:COLORS[0], nA:6, nB:6,
+  frames:[{toks:[],strokes:[]}], f:0, sel:null, seq:1, land:false
+};
+/* as fichas guardam coordenadas na quadra "em pé"; no desktop a quadra deita */
+const toStage=(x,y)=>state.land?[y,100-x]:[x,y];
+const toLog  =(x,y)=>state.land?[100-y,x]:[x,y];
+
+/* --- geometria da quadra dentro do palco (em % do palco) --- */
+function geo(){
+  const half=state.view==='half';
+  return half?{x0:9,x1:91,y0:12,y1:94,net:12,att:null,halfMode:true}
+             :{x0:9,x1:91,y0:5,y1:95,net:50,att:null,halfMode:false};
+}
+function fitStage(el,ratio){
+  if(!el)return;
+  const wide=window.innerWidth>=900;
+  const availW=(el.parentElement&&el.parentElement.clientWidth)||360;
+  const top=el.getBoundingClientRect().top+(window.scrollY||0);
+  let below=0;
+  if(wide){for(let n=el.nextElementSibling;n;n=n.nextElementSibling)
+    if(!n.hidden)below+=n.getBoundingClientRect().height+10;}
+  const availH=wide ? Math.max(330,(window.innerHeight||800)-top-below-22)
+                    : Math.max(300,(window.innerHeight||700)*0.70);
+  let w=availW, h=w*ratio;
+  if(h>availH){h=availH; w=h/ratio;}
+  const put=()=>{el.style.aspectRatio='';el.style.width=Math.round(w)+'px';
+                 el.style.height=Math.round(h)+'px';el.style.margin=wide?'0 auto':'11px auto';};
+  put();
+  if(wide){ /* segunda passada: encolhe o exato que sobra, para nada rolar */
+    for(let i=0;i<2;i++){
+      const over=document.documentElement.scrollHeight-window.innerHeight;
+      if(over<=0||h-over<300)break;
+      h-=over; w=h/ratio; put();
+    }
+  }
+}
+function sizeStage(){
+  const r=state.view==='half'?1.05:1.9;
+  fitStage($('#stage'), state.land?1/r:r);
+  resizeCanvas();
+}
+function buildCourt(){
+  const g=geo(), c=$('#court'), st=$('#stage');
+  st.className='stage '+state.surface+(state.tool!=='move'?' drawing':'');
+  sizeStage();
+  const w=g.x1-g.x0, h=g.y1-g.y0, L=state.land;
+  const atk=[];
+  if(state.surface==='indoor'){
+    if(state.view==='half')atk.push(g.y0+h*(3/9));
+    else{const hh=h/2, d=hh*(3/9); atk.push(g.y0+hh-d, g.y0+hh+d);}
+  }
+  let html;
+  if(!L){
+    html=`<div class="floor" style="left:${g.x0}%;top:${g.y0}%;width:${w}%;height:${h}%;
+      box-shadow:inset 0 0 0 2px #fff"></div>`
+      + atk.map(y=>`<i style="left:${g.x0}%;top:${y}%;width:${w}%;height:2px"></i>`).join('')
+      + `<div class="net" style="top:${g.net}%"></div>`;
+  }else{
+    html=`<div class="floor" style="left:${g.y0}%;top:${100-g.x1}%;width:${h}%;height:${w}%;
+      box-shadow:inset 0 0 0 2px #fff"></div>`
+      + atk.map(y=>`<i style="left:${y}%;top:${100-g.x1}%;width:2px;height:${w}%"></i>`).join('')
+      + `<div class="net v" style="left:${g.net}%"></div>`;
+  }
+  c.innerHTML=html;
+  $('#bWrap').hidden = state.view==='half';
+  drawTokens(); sizeStage();
+}
+
+/* --- jogadores: etiquetas por função --- */
+const NAMES={indoor:['LEV','PO1','CE1','OPO','PO2','CE2'],
+             beach:['BLQ','DEF','BL2','DF2','EX1','EX2']};
+const START={indoor:[[.82,.72],[.80,.24],[.50,.18],[.20,.24],[.18,.72],[.50,.80]],
+             beach:[[.38,.20],[.68,.62],[.16,.60],[.78,.22],[.50,.86],[.26,.36]]};
+const roleLabel=i=>NAMES[state.surface][i]||('J'+(i+1));
+const startPos=i=>START[state.surface][i]||[.50,.50];
+
+function defaultTokens(){
+  const toks=[];
+  for(let i=0;i<state.nA;i++){const p=startPos(i);
+    toks.push(mkTok('a',roleLabel(i),cx(p[0]),cyBottom(p[1])));}
+  if(!geo().halfMode){
+    for(let i=0;i<state.nB;i++){const p=startPos(i);
+      toks.push(mkTok('b',roleLabel(i),cx(1-p[0]),cyTop(p[1])));}
+  }
+  toks.push({id:'ball',team:'ball',label:'',x:50,y:geo().halfMode?60:50});
+  return toks;
+}
+function cx(f){const g=geo();return g.x0+f*(g.x1-g.x0);}
+function cyBottom(f){const g=geo();const y0=g.halfMode?g.y0:(g.y0+(g.y1-g.y0)/2);const y1=g.y1;return y0+f*(y1-y0);}
+function cyTop(f){const g=geo();const y0=g.y0;const y1=g.y0+(g.y1-g.y0)/2;return y1-f*(y1-y0);}
+function mkTok(team,label,x,y){return {id:'t'+(state.seq++),team,label,x,y};}
+
+function frame(){return state.frames[state.f];}
+function drawTokens(){
+  const st=$('#stage');
+  $$('.tok',st).forEach(e=>e.remove());
+  frame().toks.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='tok '+t.team+(t.lib?' lib':'')+(state.sel===t.id?' sel':'');
+    const c=toStage(t.x,t.y);
+    d.dataset.id=t.id; d.style.left=c[0]+'%'; d.style.top=c[1]+'%';
+    d.textContent=t.team==='ball'?'':t.label;
+    st.appendChild(d);
+  });
+}
+
+/* --- desenho --- */
+const cv=$('#cv'); const ctx=cv.getContext('2d');
+function resizeCanvas(){
+  const r=$('#stage').getBoundingClientRect(); if(!r.width)return;
+  const dpr=Math.min(window.devicePixelRatio||1,2.5);
+  cv.width=r.width*dpr; cv.height=r.height*dpr; cv.style.width=r.width+'px'; cv.style.height=r.height+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0); redraw();
+}
+function redraw(strokes){
+  const r=cv.getBoundingClientRect();
+  ctx.clearRect(0,0,r.width,r.height);
+  (strokes||frame().strokes).forEach(s=>paint(ctx,s,r.width,r.height));
+}
+function paint(c,s,W,H){
+  const P=s.pts.map(p=>[p[0]*W,p[1]*H]);
+  c.save(); c.strokeStyle=s.color; c.lineWidth=s.w||3; c.lineCap='round'; c.lineJoin='round';
+  c.setLineDash(s.type==='ball'?[7,7]:[]);
+  c.beginPath(); c.moveTo(P[0][0],P[0][1]);
+  for(let i=1;i<P.length;i++)c.lineTo(P[i][0],P[i][1]);
+  c.stroke();
+  if(s.type==='arrow'||s.type==='ball'){
+    const n=P.length, a=P[n-2]||P[0], b=P[n-1];
+    const ang=Math.atan2(b[1]-a[1],b[0]-a[0]), L=11;
+    c.setLineDash([]); c.beginPath();
+    c.moveTo(b[0]-L*Math.cos(ang-.42),b[1]-L*Math.sin(ang-.42));
+    c.lineTo(b[0],b[1]);
+    c.lineTo(b[0]-L*Math.cos(ang+.42),b[1]-L*Math.sin(ang+.42));
+    c.stroke();
+  }
+  c.restore();
+}
+/* --- histórico de desfazer --- */
+const hist=[];
+function pushHist(h){hist.push(h); if(hist.length>80)hist.shift(); updateUndo();}
+function updateUndo(){const b=$('#undo'); if(b){b.style.opacity=hist.length?'1':'.32'; b.disabled=!hist.length;}}
+function clearHist(){hist.length=0; updateUndo();}
+function doUndo(){
+  const h=hist.pop(); if(!h){updateUndo();return;}
+  const f=state.frames[h.f]; if(!f){updateUndo();return;}
+  if(h.t==='stroke')f.strokes.pop();
+  else if(h.t==='erase')f.strokes.splice(h.i,0,h.s);
+  else if(h.t==='clear')f.strokes=h.strokes;
+  else if(h.t==='move'){const tk=f.toks.find(x=>x.id===h.id); if(tk){tk.x=h.x;tk.y=h.y;}}
+  if(state.f!==h.f){state.f=h.f; renderFrames();}
+  drawTokens(); redraw(); syncTool(); updateUndo();
+}
+
+/* --- interação única: arrastar fichas ou desenhar --- */
+const stageEl=$('#stage');
+let cur=null, drag=null;
+function stagePt(e){
+  const r=stageEl.getBoundingClientRect();
+  return [(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height];
+}
+function onDown(e){
+  const p=stagePt(e);
+  if(p[0]<0||p[0]>1||p[1]<0||p[1]>1)return;
+  if(state.tool==='move'){
+    const el=e.target&&e.target.closest?e.target.closest('.tok'):null;
+    if(!el)return;
+    const t=frame().toks.find(x=>x.id===el.dataset.id); if(!t)return;
+    el.classList.remove('anim'); drag={t,el,x0:t.x,y0:t.y}; select(t.id); e.preventDefault();
+    return;
+  }
+  if(state.tool==='erase'){eraseAt(p); e.preventDefault(); return;}
+  cur={type:state.tool,color:state.color,w:state.tool==='ball'?2.5:3.5,pts:[p,p]};
+  e.preventDefault();
+}
+function onMove(e){
+  if(drag){
+    const p=stagePt(e), l=toLog(clamp(p[0]*100,1,99),clamp(p[1]*100,1,99));
+    drag.t.x=l[0]; drag.t.y=l[1];
+    drag.el.style.left=(p[0]*100)+'%'; drag.el.style.top=(p[1]*100)+'%';
+    e.preventDefault(); return;
+  }
+  if(cur){
+    const p=stagePt(e);
+    if(cur.type==='free')cur.pts.push(p); else cur.pts[1]=p;
+    redraw(frame().strokes.concat([cur]));
+    e.preventDefault();
+  }
+}
+function onUp(){
+  if(cur){
+    const d=Math.hypot(cur.pts[cur.pts.length-1][0]-cur.pts[0][0],cur.pts[cur.pts.length-1][1]-cur.pts[0][1]);
+    if(d>.015){frame().strokes.push(cur); pushHist({t:'stroke',f:state.f});}
+    cur=null; redraw();
+  }
+  if(drag&&(Math.abs(drag.t.x-drag.x0)>.4||Math.abs(drag.t.y-drag.y0)>.4))
+    pushHist({t:'move',f:state.f,id:drag.t.id,x:drag.x0,y:drag.y0});
+  drag=null;
+}
+function segDist(p,a,b){
+  const dx=b[0]-a[0], dy=b[1]-a[1], L=dx*dx+dy*dy;
+  let t=L?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L:0; t=clamp(t,0,1);
+  return Math.hypot(p[0]-(a[0]+t*dx),p[1]-(a[1]+t*dy));
+}
+function eraseAt(p){
+  const S=frame().strokes;
+  for(let i=S.length-1;i>=0;i--){
+    const P=S[i].pts;
+    for(let j=0;j<P.length-1;j++){
+      if(segDist(p,P[j],P[j+1])<.04){pushHist({t:'erase',f:state.f,i,s:S[i]});S.splice(i,1);redraw();return;}
+    }
+    if(P.length===1&&Math.hypot(P[0][0]-p[0],P[0][1]-p[1])<.04){pushHist({t:'erase',f:state.f,i,s:S[i]});S.splice(i,1);redraw();return;}
+  }
+}
+if(window.PointerEvent){
+  stageEl.addEventListener('pointerdown',onDown,{passive:false});
+  window.addEventListener('pointermove',onMove,{passive:false});
+  window.addEventListener('pointerup',onUp);
+  window.addEventListener('pointercancel',onUp);
+}else{
+  const wrap=h=>e=>{const t=e.touches&&e.touches[0]||e.changedTouches&&e.changedTouches[0];if(!t)return;
+    h({clientX:t.clientX,clientY:t.clientY,target:e.target,preventDefault:()=>e.preventDefault()});};
+  stageEl.addEventListener('touchstart',wrap(onDown),{passive:false});
+  window.addEventListener('touchmove',wrap(onMove),{passive:false});
+  window.addEventListener('touchend',onUp);
+  stageEl.addEventListener('mousedown',onDown);
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('mouseup',onUp);
+}
+/* aparência conforme ferramenta */
+function syncTool(){
+  const moving=state.tool==='move';
+  stageEl.classList.toggle('drawing',!moving);
+  stageEl.style.cursor=moving?'default':'crosshair';
+}
+
+function select(id){
+  state.sel=id;
+  $$('.tok',stageEl).forEach(e=>e.classList.toggle('sel',e.dataset.id===id));
+  const t=frame().toks.find(x=>x.id===id);
+  const p=$('#selPanel');
+  if(!t||t.team==='ball'){p.hidden=true;return;}
+  p.hidden=false; $('#selLabel').value=t.label;
+}
+$('#selLabel').addEventListener('input',e=>{
+  const t=frame().toks.find(x=>x.id===state.sel); if(!t)return;
+  t.label=e.target.value.toUpperCase();
+  const el=$(`.tok[data-id="${t.id}"]`); if(el)el.textContent=t.label;
+});
+$('#selLib').onclick=()=>{const t=frame().toks.find(x=>x.id===state.sel);if(!t)return;
+  t.lib=!t.lib; if(t.lib)t.label='LIB'; drawTokens(); syncTool();};
+$('#selDel').onclick=()=>{const i=frame().toks.findIndex(x=>x.id===state.sel);if(i<0)return;frame().toks.splice(i,1);state.sel=null;$('#selPanel').hidden=true;drawTokens();syncTool();};
+
+/* --- controles --- */
+function pressGroup(sel,attr,val){$$(sel+' button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset[attr]===val)));}
+function relabelForSurface(){
+  const now=NAMES[state.surface], other=state.surface==='beach'?NAMES.indoor:NAMES.beach;
+  state.frames.forEach(f=>['a','b'].forEach(team=>{
+    f.toks.filter(t=>t.team===team).forEach((t,i)=>{
+      if(now[i]&&(other.includes(t.label)||now.includes(t.label)))t.label=now[i];
+    });
+  }));
+}
+function setSurface(sf){
+  state.surface=sf;
+  document.body.classList.toggle('beach',sf==='beach');
+  pressGroup('#surfSel','s',sf);
+  $('#surfTag').textContent = sf==='beach'?'Areia 16 × 8 m':'Quadra 18 × 9 m';
+  document.querySelector('meta[name=theme-color]').setAttribute('content','#0F151B');
+  if(sf==='beach'&&state.nA>4){setCount('A',2);setCount('B',2);}
+  if(sf==='indoor'&&state.nA<6&&state.nB<6){setCount('A',6);setCount('B',6);}
+  relabelForSurface(); buildCourt(); syncTool();
+  $('#rotWrap').hidden = sf==='beach';
+  $('#praiaWrap').hidden = sf!=='beach';
+  if(sf==='beach')renderBeach(); else renderRot(false);
+  renderLearn();
+  store.set('surface',sf);
+}
+$('#surfSel').onclick=e=>{const b=e.target.closest('button');if(!b)return;setSurface(b.dataset.s);};
+$('#viewmode').onclick=e=>{const b=e.target.closest('button');if(!b)return;state.view=b.dataset.m;pressGroup('#viewmode','m',state.view);
+  clearHist();state.frames=[{toks:defaultTokens(),strokes:[]}];state.f=0;renderFrames();buildCourt();syncTool();};
+function countBtns(host,side){
+  host.innerHTML=[1,2,3,4,5,6].map(n=>`<button data-n="${n}" aria-pressed="${n===(side==='A'?state.nA:state.nB)}">${n}</button>`).join('');
+  host.onclick=e=>{const b=e.target.closest('button');if(!b)return;setCount(side,+b.dataset.n);};
+}
+function setCount(side,n){
+  if(side==='A')state.nA=n; else state.nB=n;
+  const team=side==='A'?'a':'b';
+  const f=frame(); const cur=f.toks.filter(t=>t.team===team);
+  if(cur.length>n){cur.slice(n).forEach(t=>f.toks.splice(f.toks.indexOf(t),1));}
+  else{
+    for(let i=cur.length;i<n;i++){
+      const p=startPos(i);
+      f.toks.push(mkTok(team,roleLabel(i), team==='a'?cx(p[0]):cx(1-p[0]), team==='a'?cyBottom(p[1]):cyTop(p[1])));
+    }
+  }
+  countBtns($('#cntA'),'A'); countBtns($('#cntB'),'B'); drawTokens(); syncTool();
+}
+const TOOLHINT={move:'Modo mover: arraste as fichas com o dedo. O ↶ desfaz o último traço ou arrasto.',
+  free:'Traço livre: desenhe direto na quadra.',
+  arrow:'Deslocamento: arraste de onde o jogador sai até onde ele chega.',
+  ball:'Trajetória da bola: arraste no caminho da bola (sai tracejado).',
+  line:'Linha reta: arraste entre dois pontos.',
+  erase:'Apagar: toque em cima do traço que quer remover.'};
+$('#tools').onclick=e=>{const b=e.target.closest('button');if(!b)return;state.tool=b.dataset.t;
+  $$('#tools button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.t===state.tool)));
+  $('#toolHint').textContent=TOOLHINT[state.tool]||''; syncTool();};
+$('#colors').innerHTML=COLORS.map((c,i)=>`<button class="sw" style="background:${c}" data-c="${c}" aria-pressed="${i===0}"></button>`).join('');
+$('#colors').onclick=e=>{const b=e.target.closest('button');if(!b)return;state.color=b.dataset.c;
+  $$('#colors button').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.c===state.color)));};
+$('#undo').onclick=doUndo;
+$('#clearDraw').onclick=()=>{
+  if(!frame().strokes.length)return;
+  pushHist({t:'clear',f:state.f,strokes:frame().strokes.slice()});
+  frame().strokes=[]; redraw();
+};
+$('#resetCourt').onclick=()=>{clearHist();state.frames=[{toks:defaultTokens(),strokes:[]}];state.f=0;state.sel=null;$('#selPanel').hidden=true;renderFrames();drawTokens();redraw();syncTool();toast('Quadra reiniciada');};
+
+/* --- quadros / animação --- */
+function cloneFrame(f){return {toks:f.toks.map(t=>({...t})),strokes:JSON.parse(JSON.stringify(f.strokes))};}
+function renderFrames(){
+  $('#frames').innerHTML=state.frames.map((_,i)=>`<button class="fchip" data-i="${i}" aria-pressed="${i===state.f}">${i+1}</button>`).join('');
+  $('#fInfo').textContent=`${state.f+1} de ${state.frames.length}`;
+}
+$('#frames').onclick=e=>{const b=e.target.closest('button');if(!b)return;state.f=+b.dataset.i;state.sel=null;$('#selPanel').hidden=true;renderFrames();drawTokens();redraw();syncTool();};
+$('#fAdd').onclick=()=>{const nf=cloneFrame(frame());nf.strokes=[];state.frames.splice(state.f+1,0,nf);state.f++;renderFrames();drawTokens();redraw();syncTool();};
+$('#fDup').onclick=()=>{state.frames.splice(state.f+1,0,cloneFrame(frame()));state.f++;renderFrames();drawTokens();redraw();syncTool();};
+$('#fDel').onclick=()=>{if(state.frames.length<2)return toast('Precisa de pelo menos um quadro');state.frames.splice(state.f,1);state.f=Math.max(0,state.f-1);renderFrames();drawTokens();redraw();syncTool();};
+$('#fPlay').onclick=async()=>{
+  if(state.frames.length<2)return toast('Crie um segundo quadro para animar');
+  const btn=$('#fPlay'); btn.disabled=true;
+  state.f=0; renderFrames(); drawTokens(); redraw(); syncTool();
+  for(let i=1;i<state.frames.length;i++){
+    const to=state.frames[i];
+    ctx.clearRect(0,0,cv.width,cv.height);
+    $$('.tok').forEach(el=>{
+      el.classList.add('anim');
+      const t=to.toks.find(x=>x.id===el.dataset.id);
+      if(t){const c=toStage(t.x,t.y);el.style.left=c[0]+'%';el.style.top=c[1]+'%';}
+    });
+    await new Promise(r=>setTimeout(r,650));
+    state.f=i; renderFrames(); drawTokens(); redraw(); syncTool();
+    await new Promise(r=>setTimeout(r,350));
+  }
+  btn.disabled=false;
+};
+
+/* --- jogadas salvas --- */
+async function listPlays(){
+  const p=await store.get('plays')||[];
+  $('#playList').innerHTML=p.length?p.map((x,i)=>
+    `<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding-top:8px">
+      <span style="font-size:13px">${x.name} <span class="hint">· ${x.frames.length} quadro(s)</span></span>
+      <span class="row" style="gap:6px">
+        <button class="btn gho" data-load="${i}">Abrir</button>
+        <button class="btn gho" data-del="${i}">×</button>
+      </span></div>`).join(''):'<p class="hint" style="margin:0">Nada salvo ainda. Monte a jogada e dê um nome.</p>';
+}
+$('#playSave').onclick=async()=>{
+  const name=($('#playName').value||'').trim()||('Jogada '+new Date().toLocaleDateString('pt-BR'));
+  const p=await store.get('plays')||[];
+  p.unshift({name,surface:state.surface,view:state.view,nA:state.nA,nB:state.nB,frames:state.frames});
+  await store.set('plays',p.slice(0,40)); $('#playName').value=''; listPlays(); toast('Jogada salva');
+};
+$('#playList').onclick=async e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  const p=await store.get('plays')||[];
+  if(b.dataset.del!=null){p.splice(+b.dataset.del,1);await store.set('plays',p);listPlays();return;}
+  const x=p[+b.dataset.load]; if(!x)return;
+  clearHist();
+  state.surface=x.surface;state.view=x.view;state.nA=x.nA;state.nB=x.nB;state.frames=x.frames;state.f=0;
+  pressGroup('#surface','s',state.surface);pressGroup('#viewmode','m',state.view);
+  countBtns($('#cntA'),'A');countBtns($('#cntB'),'B');renderFrames();buildCourt();syncTool();toast('Jogada aberta');
+};
+
+/* --- exportar imagem --- */
+$('#exportPng').onclick=()=>{
+  const r=$('#stage').getBoundingClientRect();
+  const W=Math.round(r.width*2),H=Math.round(r.height*2);
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const g=geo(), beach=state.surface==='beach', L=state.land;
+  x.fillStyle=beach?'#B9803F':'#D4622A'; x.fillRect(0,0,W,H);
+  const X=p=>p/100*W, Y=p=>p/100*H;
+  const w=g.x1-g.x0, h=g.y1-g.y0;
+  const atk=[];
+  if(!beach){ if(state.view==='half')atk.push(g.y0+h*(3/9));
+    else{const hh=h/2,d=hh*(3/9);atk.push(g.y0+hh-d,g.y0+hh+d);} }
+  x.fillStyle=beach?'#D9A768':'#17697F';
+  if(!L)x.fillRect(X(g.x0),Y(g.y0),X(w),Y(h)); else x.fillRect(X(g.y0),Y(100-g.x1),X(h),Y(w));
+  x.strokeStyle='#fff';x.lineWidth=4;
+  if(!L)x.strokeRect(X(g.x0),Y(g.y0),X(w),Y(h)); else x.strokeRect(X(g.y0),Y(100-g.x1),X(h),Y(w));
+  x.lineWidth=3;
+  atk.forEach(v=>{x.beginPath();
+    if(!L){x.moveTo(X(g.x0),Y(v));x.lineTo(X(g.x1),Y(v));}
+    else  {x.moveTo(X(v),Y(100-g.x1));x.lineTo(X(v),Y(100-g.x0));}
+    x.stroke();});
+  x.lineWidth=5;x.beginPath();
+  if(!L){x.moveTo(0,Y(g.net));x.lineTo(W,Y(g.net));} else {x.moveTo(X(g.net),0);x.lineTo(X(g.net),H);}
+  x.stroke();
+  frame().strokes.forEach(st=>paint(x,st,W,H));
+  frame().toks.forEach(t=>{
+    const p=toStage(t.x,t.y), isBall=t.team==='ball', R=isBall?14:24;
+    x.beginPath();x.arc(X(p[0]),Y(p[1]),R,0,7);
+    x.fillStyle=isBall?'#fff':(t.lib?'#4FB477':(t.team==='a'?
+      (state.surface==='beach'?'#2FC2B4':'#F2C230'):'#F2F6FA'));x.fill();
+    x.lineWidth=3;x.strokeStyle=isBall?'#D4622A':(t.team==='b'?'#3A7FD5':'rgba(255,255,255,.8)');x.stroke();
+    if(!isBall){x.fillStyle='#132030';x.font='800 15px system-ui';x.textAlign='center';x.textBaseline='middle';
+      x.fillText(t.label,X(p[0]),Y(p[1])+1);}
+  });
+  c.toBlob(b=>{
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);
+    a.download='jogada.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  });
+  toast('Imagem gerada');
+};
+
+/* =========================================================
+   2. ROTAÇÕES — 5×1
+   ========================================================= */
+const ROLES={
+  L :{n:'Levantador', s:'L'},  O :{n:'Oposto',     s:'O'},
+  P1:{n:'Ponteiro 1', s:'P¹'}, P2:{n:'Ponteiro 2', s:'P²'},
+  C1:{n:'Central 1',  s:'C¹'}, C2:{n:'Central 2',  s:'C²'},
+  LIB:{n:'Líbero',    s:'LIB'}
+};
+/* escalação padrão do 5×1: zonas 1→6 na rotação 1 */
+const LINEUP={1:'L',2:'P1',3:'C1',4:'O',5:'P2',6:'C2'};
+const FRONT=[2,3,4], ZONES=[1,2,3,4,5,6];
+const R={rot:0, phase:'recep', libero:true};
+
+const zoneOf=(start,k)=>((start-1-k)%6+6)%6+1;
+const cat=r=>r==='L'?'L':r==='O'?'O':r==='LIB'?'LIB':(r[0]==='P'?'P':'C');
+function currentMap(){const m={};for(const z in LINEUP)m[zoneOf(+z,R.rot)]=LINEUP[z];return m;}
+const setterZone=()=>zoneOf(1,R.rot);
+
+/* coordenadas: x 0..1 (esq→dir), y 0 = rede .. 1 = linha de fundo */
+const Z={4:[.20,.24],3:[.50,.18],2:[.80,.24],5:[.18,.72],6:[.50,.80],1:[.82,.72]};
+const ZLAB={4:[.06,.30],3:[.50,.05],2:[.94,.30],5:[.06,.66],6:[.50,.95],1:[.94,.66]};
+
+/* Posições transcritas do material de referência (chave = zona do levantador).
+   y = 0 na rede, 1 na linha de fundo; a linha de 3 m fica em 1/3. */
+const RECEP={
+  1:{4:[.08,.12],3:[.26,.24],2:[.80,.48],5:[.15,.52],6:[.50,.81],1:[.89,.70]},
+  6:{4:[.80,.48],3:[.59,.14],2:[.92,.24],5:[.50,.81],6:[.49,.27],1:[.15,.52]},
+  5:{4:[.08,.16],3:[.28,.60],2:[.92,.27],5:[.11,.38],6:[.52,.80],1:[.76,.55]},
+  4:{4:[.08,.11],3:[.28,.23],2:[.18,.51],5:[.49,.70],6:[.72,.51],1:[.92,.89]},
+  3:{4:[.18,.51],3:[.53,.11],2:[.92,.24],5:[.48,.77],6:[.69,.89],1:[.76,.53]},
+  2:{4:[.08,.24],3:[.22,.53],2:[.92,.25],5:[.14,.88],6:[.52,.77],1:[.84,.58]}
+};
+const SAQUE={
+  1:{4:[.15,.17],3:[.50,.13],2:[.85,.14],5:[.18,.64],6:[.51,.63],1:[.85,.67]},
+  6:{4:[.12,.12],3:[.50,.14],2:[.88,.14],5:[.20,.49],6:[.52,.65],1:[.89,.53]},
+  5:{4:[.18,.14],3:[.50,.12],2:[.89,.15],5:[.17,.60],6:[.50,.79],1:[.88,.53]},
+  4:{4:[.16,.15],3:[.50,.14],2:[.88,.13],5:[.15,.55],6:[.51,.80],1:[.88,.56]},
+  3:{4:[.16,.15],3:[.53,.15],2:[.88,.15],5:[.14,.55],6:[.51,.83],1:[.88,.54]},
+  2:{4:[.16,.14],3:[.52,.14],2:[.89,.15],5:[.19,.62],6:[.52,.84],1:[.87,.54]}
+};
+const SETPATH={
+  1:'espera no <b>fundo direito</b>, colado à lateral e fora do corredor do passe, e <b>infiltra</b> para a posição 2',
+  2:'já está na <b>posição 2</b>: só ajusta os pés e levanta',
+  3:'espera na rede, à esquerda de quem está no P2, e <b>desliza</b> para a saída de rede',
+  4:'espera na rede, no canto esquerdo, e <b>atravessa</b> para a posição 2 trocando com o ponteiro',
+  5:'espera adiantado no <b>canto esquerdo</b>: é a infiltração mais longa',
+  6:'espera adiantado, <b>atrás de quem está no P3</b>: é a infiltração mais curta'
+};
+
+function liberoZone(map){       /* líbero entra pelo central que está no fundo */
+  if(!R.libero)return null;
+  return ZONES.find(z=>cat(map[z])==='C'&&!FRONT.includes(z))||null;
+}
+function displayMap(){
+  const map=currentMap(), lz=liberoZone(map), d={};
+  ZONES.forEach(z=>{
+    /* no saque, o central do P1 é o sacador: o líbero não pode sacar */
+    d[z]=(lz===z&&!(R.phase==='saque'&&z===1))?'LIB':map[z];
+  });
+  return d;
+}
+function baseSpot(z,c){                     /* destino de cada função na base */
+  if(FRONT.includes(z))return c==='P'?4:c==='C'?3:2;
+  return (c==='C'||c==='LIB')?5:c==='P'?6:1;
+}
+/* as duas trocas (uma na rede, uma no fundo) que acontecem no instante do saque */
+function swapPairs(disp){
+  const out=[];
+  [[4,3,2],[5,6,1]].forEach(row=>{
+    const d={}; row.forEach(z=>d[z]=baseSpot(z,cat(disp[z])));
+    row.forEach(z=>{ if(d[z]!==z&&d[d[z]]===z&&z<d[z])out.push([z,d[z]]); });
+  });
+  return out;
+}
+function formation(){
+  const t=(R.phase==='saque'?SAQUE:RECEP)[setterZone()], out={};
+  ZONES.forEach(z=>out[z]=t[z]); return out;
+}
+
+/* seta dupla tracejada entre duas posições (as trocas do saque) */
+function swapSVG(a,b,W,H){
+  const dxp=(b[0]-a[0])/100*W, dyp=(b[1]-a[1])/100*H;
+  const len=Math.hypot(dxp,dyp); if(len<30)return '';
+  const g=Math.atan2(dyp,dxp), L=8, pad=23;
+  const px=v=>v/W*100, py=v=>v/H*100;
+  const sx=a[0]+px(Math.cos(g)*pad), sy=a[1]+py(Math.sin(g)*pad);
+  const ex=b[0]-px(Math.cos(g)*pad), ey=b[1]-py(Math.sin(g)*pad);
+  const head=(x,y,ang)=>`<line x1="${x}" y1="${y}" x2="${x+px(Math.cos(ang)*L)}" y2="${y+py(Math.sin(ang)*L)}" stroke="#fff" stroke-width="1.6" opacity=".8"/>`;
+  return `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="#fff" stroke-width="1.6" stroke-dasharray="4 4" opacity=".7"/>`
+    + head(ex,ey,g+2.55)+head(ex,ey,g-2.55)
+    + head(sx,sy,g+Math.PI+2.55)+head(sx,sy,g+Math.PI-2.55);
+}
+
+function renderRot(animate){
+  const st=$('#rotStage'), disp=displayMap();
+  st.className='stage indoor'; fitStage(st,1.05);
+  const g={x0:9,x1:91,y0:12,y1:94}, w=g.x1-g.x0, h=g.y1-g.y0;
+  const PX=c=>[g.x0+c[0]*w, g.y0+c[1]*h];
+  $('#rotCourt').innerHTML=
+    `<div class="floor" style="left:${g.x0}%;top:${g.y0}%;width:${w}%;height:${h}%;box-shadow:inset 0 0 0 2px #fff"></div>
+     <i style="left:${g.x0}%;top:${g.y0+h*(3/9)}%;width:${w}%;height:2px"></i>
+     <div class="net" style="top:${g.y0}%"></div>`
+    + ZONES.map(z=>`<span class="zonelab" style="left:${g.x0+ZLAB[z][0]*w}%;top:${g.y0+ZLAB[z][1]*h}%">P${z}</span>`).join('');
+
+  const coords=formation();
+  if(R.phase==='saque'){
+    const r=st.getBoundingClientRect(), W=r.width||340, H=r.height||360;
+    $('#rotCourt').innerHTML+=`<svg class="ovl" viewBox="0 0 100 100" preserveAspectRatio="none">${
+      swapPairs(disp).map(pr=>swapSVG(PX(coords[pr[0]]),PX(coords[pr[1]]),W,H)).join('')}</svg>`;
+  }
+  $$('.tok',st).forEach(e=>e.remove());
+  ZONES.forEach(z=>{
+    const role=disp[z], c=PX(coords[z]);
+    const d=document.createElement('div');
+    d.className='tok '+(role==='LIB'?'lib':'a')+(animate?' anim':'');
+    d.style.left=c[0]+'%'; d.style.top=c[1]+'%';
+    d.style.fontSize=ROLES[role].s.length>2?'10px':'13px';
+    d.innerHTML=ROLES[role].s+`<small>P${z}</small>`;
+    st.appendChild(d);
+  });
+  renderExp(disp);
+  $$('#rotbar button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.r===R.rot)));
+}
+
+function renderExp(disp){
+  const sz=setterZone(), sFront=FRONT.includes(sz);
+  const nm=z=>ROLES[disp[z]].n;
+  const t=(R.phase==='saque'?SAQUE:RECEP)[sz];
+  const head=`<div class="line"><span class="k">Rotação</span><span><b>${R.rot+1} de 6</b> — levantador em
+      <span class="pill y">P${sz}</span> ${sFront?'(na rede)':'(no fundo)'} ·
+      <span class="pill">${sFront?2:3} atacantes de rede</span></span></div>`;
+  let body='';
+
+  if(R.phase==='recep'){
+    const pz=ZONES.filter(z=>['P','LIB'].includes(cat(disp[z]))).sort((x,y)=>t[x][0]-t[y][0]);
+    const lane=['esquerda','meio','direita'];
+    const out=ZONES.filter(z=>['C','O'].includes(cat(disp[z])));
+    body=`
+    <div class="line"><span class="k">Passe</span><span>${pz.map((z,i)=>
+      `<b>${nm(z)}</b> ${lane[i]} <span class="hint">(P${z}${FRONT.includes(z)?', recua da rede para passar':''})</span>`).join('<br>')}</span></div>
+    <div class="line"><span class="k">Fora do passe</span><span>${out.map(z=>
+      `${nm(z)} <span class="hint">(P${z}${FRONT.includes(z)?', colado à rede':', escondido no fundo'})</span>`).join('<br>')}</span></div>
+    <div class="line"><span class="k">Levantador</span><span>Do P${sz} ${SETPATH[sz]}.</span></div>
+    <div class="line"><span class="k">Depois do passe</span><span>Ponteiro ataca pelo P4, central de primeiro tempo no P3, oposto pelo P2${sFront?' ou de fundo, pela entrada de 1':''}.${sFront?' Com o levantador na rede, o pipe pelo meio vira a terceira opção.':''}</span></div>
+    <div class="line"><span class="k">Regra</span><span class="hint">Esta é a foto do <b>instante do saque</b>: 1 atrás do 2, 6 atrás do 3, 5 atrás do 4; 4 à esquerda de 3 à esquerda de 2; 5 à esquerda de 6 à esquerda de 1.</span></div>`;
+  }
+
+  else{
+    const slot=d=>{const z=ZONES.find(x=>baseSpot(x,cat(disp[x]))===d);return z?nm(z):'—';};
+    const pairs=swapPairs(disp).map(pr=>`${nm(pr[0])} (P${pr[0]}) ↔ ${nm(pr[1])} (P${pr[1]})`);
+    body=`
+    <div class="line"><span class="k">Posições</span><span>Cada um está na <b>sua zona do rodízio</b>. As setas são as duas trocas feitas no instante do saque.</span></div>
+    <div class="line"><span class="k">Trocas</span><span>${pairs.join('<br>')||'Nenhuma: já estão todos na base.'}</span></div>
+    <div class="line"><span class="k">Base final</span><span>
+      <b>P4</b> ${slot(4)} · <b>P3</b> ${slot(3)} · <b>P2</b> ${slot(2)}<br>
+      <b>P5</b> ${slot(5)} · <b>P6</b> ${slot(6)} · <b>P1</b> ${slot(1)}<br>
+      <span class="hint">Ponteiro na esquerda, central no meio, levantador ou oposto na direita — na rede e no fundo.</span></span></div>
+    <div class="line"><span class="k">Sacador</span><span><b>${nm(1)}</b>, que está no P1. Depois do saque entra e assume a base.</span></div>`;
+  }
+
+  const tips=[];
+  tips.push(sFront
+    ? 'Levantador na rede: só <b>2 atacantes</b> à frente — pipe e entrada de 1 devolvem a terceira opção.'
+    : 'Levantador no fundo: <b>3 atacantes na rede</b>. É a fase forte da rotação.');
+  const lz=liberoZone(currentMap());
+  if(lz===1&&R.phase==='saque')tips.push('O central do P1 é quem <b>saca</b> — o líbero não pode sacar; a troca acontece depois.');
+  else if(lz)tips.push(`O líbero entra pelo <b>${ROLES[currentMap()[lz]].n}</b> (P${lz}), que está no fundo.`);
+
+  $('#rotExp').innerHTML=head+body+tips.map(x=>`<div class="line"><span class="k">Dica</span><span>${x}</span></div>`).join('');
+}
+
+/* controles */
+function buildRotBar(){
+  $('#rotbar').innerHTML=[0,1,2,3,4,5].map(i=>
+    `<button class="rchip" data-r="${i}" aria-pressed="${i===R.rot}">R${i+1}</button>`).join('');
+}
+$('#rotbar').onclick=e=>{const b=e.target.closest('button');if(!b)return;R.rot=+b.dataset.r;renderRot(true);};
+$('#rotNext').onclick=()=>{R.rot=(R.rot+1)%6;buildRotBar();renderRot(true);};
+$('#phaseSel').onclick=e=>{const b=e.target.closest('button');if(!b)return;R.phase=b.dataset.p;
+  pressGroup('#phaseSel','p',R.phase);renderRot(true);};
+$('#libSel').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  R.libero=b.dataset.l==='1'; pressGroup('#libSel','l',b.dataset.l); renderRot(true);};
+
+/* =========================================================
+   2b. AREIA — fases do rally 2×2
+   ========================================================= */
+const B={phase:'saque'};
+const BPOS={
+  saque:{BLQ:[.45,.10],DEF:[.72,1.12],ATK:null,target:null,
+    t:['Sacador','Fica atrás da linha de fundo. Na areia o saque é a arma número um: viagem (flutuante) para o vento, ou saque em suspensão para pressionar.'],
+    e:[['Parceiro','Espera na rede, já decidido se vai bloquear. O sinal com a mão nas costas é dado <b>antes</b> do saque.'],
+       ['Depois do saque','O sacador entra na quadra e vira defensor — quem saca quase sempre defende.'],
+       ['Ordem','Quem sacou primeiro no set volta a sacar sempre que a dupla recupera o saque. A ordem não muda dentro do set.']]},
+  recep:{BLQ:[.28,.55],DEF:[.72,.55],ATK:[.50,-.14],target:null,
+    t:['Recepção','Os dois dividem a quadra ao meio. Quem não passa vira levantador; quem passou vira atacante.'],
+    e:[['Divisão','Cada um cuida da sua metade e chama a bola em voz alta antes de ela cruzar a rede.'],
+       ['Depois do passe','O levantador vai à rede e levanta; o passador arma o ataque, quase sempre pela diagonal.'],
+       ['Cuidado','Passe de dedos é permitido, mas julgado com rigor. Em saque forte, o manchete é mais seguro.']]},
+  linha:{BLQ:[.22,.08],DEF:[.62,.62],ATK:[.22,-.14],target:[.70,.55],
+    t:['Bloqueio na linha (1 dedo)','O bloqueador fecha a linha — o corredor curto, junto à lateral. O defensor cobre toda a diagonal.'],
+    e:[['Bloqueador','Sobe alinhado com o ombro que ataca, tampando a linha. Não pode abrir depois: se abrir, os dois espaços ficam livres.'],
+       ['Defensor','Fica na diagonal profunda e lê a largada por cima do bloqueio.'],
+       ['Quando usar','Contra atacante que gosta de linha ou quando o vento empurra a bola para a lateral.']]},
+  diag:{BLQ:[.32,.08],DEF:[.14,.60],ATK:[.22,-.14],target:[.22,.62],
+    t:['Bloqueio na diagonal (2 dedos)','O bloqueador desloca-se para dentro e fecha a diagonal, que é o corredor mais longo e mais usado. O defensor assume a linha.'],
+    e:[['Bloqueador','Posiciona-se um passo para dentro em relação ao atacante.'],
+       ['Defensor','Cola na linha e sobe um pouco: a bola que passa por ali chega rápido.'],
+       ['Quando usar','Contra atacante destro batendo da esquerda, que naturalmente puxa para a diagonal.']]},
+  peel:{BLQ:[.30,.46],DEF:[.72,.58],ATK:[.22,-.14],target:null,
+    t:['Sem bloqueio — o recuo (peel)','O bloqueador desiste da rede e recua para defender. Viram dois defensores dividindo a quadra.'],
+    e:[['Quando usar','Passe ruim do adversário, atacante baixo, vento forte contra, ou quando o time adversário só larga.'],
+       ['Como recuar','Sai da rede de costas para a lateral, sem virar o rosto — precisa ver a bola o tempo todo.'],
+       ['Sinal','Mão fechada atrás das costas, combinada antes do saque.']]}
+};
+function renderBeach(){
+  const st=$('#bStage'), c=$('#bCourt'), d=BPOS[B.phase];
+  st.className='stage beach'; fitStage(st,1.05);
+  const g={x0:9,x1:91,y0:14,y1:94}, w=g.x1-g.x0, h=g.y1-g.y0;
+  const X=f=>g.x0+f*w, Y=f=>g.y0+f*h;
+  let svg='';
+  if(d.ATK&&d.target){
+    svg=`<svg class="ovl" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <line x1="${X(d.ATK[0])}" y1="${Y(d.ATK[1])}" x2="${X(d.target[0])}" y2="${Y(d.target[1])}"
+        stroke="#fff" stroke-width="2" stroke-dasharray="4 4" opacity=".85"/>
+      <circle cx="${X(d.target[0])}" cy="${Y(d.target[1])}" r="2.4" fill="none" stroke="#fff" stroke-width="2"/>
+    </svg>`;
+  }
+  c.innerHTML=`<div class="floor" style="left:${g.x0}%;top:${g.y0}%;width:${w}%;height:${h}%;box-shadow:inset 0 0 0 2px #fff"></div>
+    <div class="net" style="top:${g.y0}%"></div>`+svg;
+  $$('.tok',st).forEach(e=>e.remove());
+  const put=(lab,pos,cls)=>{
+    const t=document.createElement('div'); t.className='tok anim '+cls;
+    t.style.left=X(pos[0])+'%'; t.style.top=Y(pos[1])+'%'; t.style.fontSize='10.5px';
+    t.textContent=lab; st.appendChild(t);
+  };
+  if(d.ATK)put('ATK',d.ATK,'b');
+  put(B.phase==='saque'?'SAQ':'DEF',d.DEF,'a');
+  put(B.phase==='peel'?'DEF':(B.phase==='recep'?'REC':'BLQ'),d.BLQ,'a');
+  $('#bExp').innerHTML=`<div class="line"><span class="k">Fase</span><span><b>${d.t[0]}</b><br>${d.t[1]}</span></div>`
+    + d.e.map(x=>`<div class="line"><span class="k">${x[0]}</span><span>${x[1]}</span></div>`).join('')
+    + `<div class="line"><span class="k">Lembre</span><span class="hint">Na areia <b>não há zonas nem rodízio</b>: os dois podem ficar em qualquer lugar. A única ordem obrigatória é a de saque.</span></div>`;
+  $$('#bPhase button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.b===B.phase)));
+}
+$('#bPhase').onclick=e=>{const b=e.target.closest('button');if(!b)return;B.phase=b.dataset.b;renderBeach();};
+
+$('#bExtra').innerHTML=`
+<details><summary>Ordem de saque — o “rodízio” da areia</summary><div class="body">
+  <p style="margin:0;font-size:13.5px">No começo do set a dupla escolhe quem saca primeiro. A partir daí a ordem <b>alterna</b> e não muda mais até o fim do set: cada vez que vocês recuperam o saque, saca quem não sacou da última vez. Sacar fora de ordem é <b>falta de ordem de saque</b> — ponto para o adversário e correção da ordem.</p>
+  <p class="hint" style="margin:0">A ordem pode ser trocada no set seguinte.</p>
+</div></details>
+<details><summary>Sinais de bloqueio (mão atrás das costas)</summary><div class="body">
+  <div class="exp">
+    <div class="line"><span class="k">1 dedo</span><span>Bloqueio na <b>linha</b> — o defensor cobre a diagonal.</span></div>
+    <div class="line"><span class="k">2 dedos</span><span>Bloqueio na <b>diagonal</b> — o defensor cobre a linha.</span></div>
+    <div class="line"><span class="k">Mão fechada</span><span><b>Não bloqueia</b>: recuo, viram dois defensores.</span></div>
+    <div class="line"><span class="k">Mão aberta</span><span>Bloqueia a <b>bola</b> — segue o levantamento, sem lado definido.</span></div>
+  </div>
+  <p class="hint" style="margin:8px 0 0">Os sinais são dados antes do saque, com a mão de cada lado indicando o adversário correspondente. Depois da recepção adversária dá para mudar na voz.</p>
+</div></details>`;
+
+/* =========================================================
+   3. APRENDER — faltas e o sinal do árbitro
+   ========================================================= */
+const BODY='<circle cx="30" cy="11" r="6"/><path d="M30 17v22"/><path d="M30 39l-7 21M30 39l7 21"/>';
+const O=(x,y)=>`transform-origin:${x}px ${y}px`;
+const SIG={
+  /* condução: o antebraço sobe devagar, palma para cima */
+  palmUp:`<path d="M30 22 19 30"/>
+    <g class="an an-sw" style="--r:38deg;${O(19,30)}"><path d="M19 30 43 27"/><path d="M43 27l5-4"/></g>
+    <path d="M52 24V12M52 12l-3 4M52 12l3 4" opacity=".5"/>`,
+  /* dedos levantados */
+  two:`<g class="an an-sw" style="--r:55deg;${O(30,22)}"><path d="M30 22 40 15 43 5"/></g>
+    <text class="an an-pop" x="48" y="17" font-size="17" style="${O(53,12)}">2</text>`,
+  four:`<g class="an an-sw" style="--r:55deg;${O(30,22)}"><path d="M30 22 40 15 43 5"/></g>
+    <text class="an an-pop" x="48" y="17" font-size="17" style="${O(53,12)}">4</text>`,
+  eight:`<g class="an an-sw" style="--r:-55deg;${O(30,22)}"><path d="M30 22 20 14 18 4"/></g>
+    <g class="an an-sw" style="--r:55deg;${O(30,22)}"><path d="M30 22 40 14 42 4"/></g>
+    <text class="an an-pop" x="23" y="36" font-size="15" style="${O(28,31)}">8</text>`,
+  /* antebraços sobem na vertical */
+  out:`<g class="an an-sw" style="--r:-45deg;${O(30,22)}"><path d="M30 22 16 27 16 8"/></g>
+    <g class="an an-sw" style="--r:45deg;${O(30,22)}"><path d="M30 22 44 27 44 8"/></g>`,
+  /* braço desce e aponta o chão */
+  inn:`<g class="an an-sw" style="--r:-35deg;${O(30,22)}"><path d="M30 22 41 32 47 46"/><path d="M47 46l-5-2M47 46l1-5"/></g>`,
+  /* indicador girando */
+  circle:`<path d="M30 23 23 31"/><circle cx="17" cy="39" r="8" stroke-dasharray="3 3" opacity=".45"/>
+    <g class="an an-spin" style="${O(17,39)}"><path d="M17 31A8 8 0 0 1 25 39"/><path d="M25 39l-4-2M25 39l3-3"/></g>`,
+  /* mão indica o lado da rede */
+  netSide:`<path d="M38 26h20" stroke-dasharray="3 2" opacity=".55"/>
+    <g class="an an-swing" style="${O(30,22)}"><path d="M30 22 43 26"/><path d="M43 26l4-2"/></g>`,
+  /* mão passa por cima da rede, palma para baixo */
+  netHand:`<path d="M34 31h24" stroke-dasharray="3 2" opacity=".55"/>
+    <g class="an an-slide"><path d="M30 21 41 22 55 22"/><path d="M55 22v4"/></g>`,
+  /* aponta para a linha */
+  line:`<path d="M36 54h24" opacity=".55"/>
+    <g class="an an-sw" style="--r:-35deg;${O(30,22)}"><path d="M30 22 40 33 45 43"/></g>`,
+  /* braço estendido sobe, palma para cima */
+  armUp:`<g class="an an-sw" style="--r:50deg;${O(30,22)}"><path d="M30 22 43 15 53 10"/><path d="M53 10l4-4"/></g>`,
+  /* antebraço desce, mão aberta */
+  downF:`<path d="M30 22 41 18"/>
+    <g class="an an-sw" style="--r:-75deg;${O(41,18)}"><path d="M41 18 47 31"/><path d="M47 31l4 3"/></g>
+    <path d="M55 10v16M55 26l-3-5M55 26l3-5" opacity=".5"/>`,
+  /* palma varre os dedos verticais */
+  brush:`<path d="M42 13v19"/><path d="M38 13v17" opacity=".5"/>
+    <g class="an an-slide"><path d="M26 26h18"/><path d="M26 26l4-4M26 26l4 4"/></g>`,
+  /* dois polegares */
+  thumbs:`<g class="an an-sw" style="--r:-35deg;${O(30,22)}"><path d="M30 22 20 27 20 17"/></g>
+    <g class="an an-sw" style="--r:35deg;${O(30,22)}"><path d="M30 22 40 27 40 17"/></g>`,
+  /* cartão levantado */
+  card:`<g class="an an-rise"><path d="M30 22 43 17"/>
+    <rect x="43" y="5" width="10" height="15" rx="2" fill="var(--accent)" stroke="none"/></g>`,
+  /* cartão cobrindo o pulso */
+  wrist:`<path d="M30 22 21 30 33 34"/>
+    <g class="an an-tap"><rect x="33" y="27" width="9" height="13" rx="2" fill="var(--accent)" stroke="none"/></g>`
+};
+const ico=k=>`<svg viewBox="0 0 62 64">${BODY}${SIG[k]||''}</svg>`;
+
+function faultHTML(groups){
+  const openFirst=window.innerWidth<900;
+  return groups.map(g=>`<details${g.open&&openFirst?' open':''}><summary>${g.g}</summary><div class="body" style="padding-top:4px">`
+    + g.items.map(f=>`<div class="fault"><div class="ic">${ico(f.ic)}</div><div>
+        <b>${f.n}</b><p>${f.d}</p><span class="sg"><b>Sinal:</b> ${f.s}</span>
+        ${f.r?`<span class="ref">${f.r}</span>`:''}</div></div>`).join('')
+    + '</div></details>').join('');
+}
+
+const FAULTS_INDOOR=[
+{g:'Faltas de toque', open:true, items:[
+ {ic:'palmUp',n:'Condução',r:'Sinal 16 · Catch',
+  d:'A bola é segurada, acompanhada ou empurrada em vez de rebatida. O contato tem que ser instantâneo: se a bola não sai na hora, muda de direção duas vezes ou é levada pela mão, é falta. Vale para a largada acompanhada e para o levantamento arrastado.',
+  s:'O antebraço sobe <b>devagar</b>, à frente do peito, com a palma da mão voltada para cima. A lentidão do gesto é parte do sinal — é o que o diferencia do “bola não lançada”, que é feito com o braço estendido.'},
+ {ic:'two',n:'Dois toques',r:'Sinal 17 · Double contact',
+  d:'O mesmo jogador toca duas vezes seguidas. Só é permitido no primeiro toque da equipe, se for numa única ação — típico do manchete em bola forte.',
+  s:'Levanta a mão acima do ombro mostrando <b>dois dedos separados</b> (indicador e médio). Depois indica o jogador em falta.'},
+ {ic:'four',n:'Quatro toques',r:'Sinal 18 · Four hits',
+  d:'A equipe tocou quatro vezes antes de devolver. O toque do bloqueio não conta como um dos três.',
+  s:'Levanta a mão mostrando <b>quatro dedos separados</b>, acima do ombro.'},
+ {ic:'brush',n:'Bola tocada',r:'Sinal 24 · Ball touched',
+  d:'A bola saiu, mas encostou em alguém antes — o ponto vai para quem não tocou por último.',
+  s:'Mantém uma mão na <b>vertical</b>, dedos para cima, e passa a <b>palma da outra</b> sobre esses dedos, à frente do peito.'},
+ {ic:'out',n:'Bola fora',r:'Sinal 15 · Ball “out”',
+  d:'Caiu fora, tocou a antena, um objeto ou o teto, ou passou por fora do espaço entre as antenas.',
+  s:'Levanta os <b>dois antebraços na vertical</b>, na altura da cabeça, mãos abertas e <b>palmas viradas para o próprio corpo</b>. Não confundir com o sinal de bloqueio, em que os braços vão esticados e as palmas para a frente.'},
+ {ic:'inn',n:'Bola dentro',r:'Sinal 14 · Ball “in”',
+  d:'Caiu na quadra. A linha faz parte da quadra: bola na linha é dentro.',
+  s:'Estende o braço e <b>aponta com os dedos para o chão</b>, na direção da quadra onde a bola caiu.'}]},
+
+{g:'Posição e rodízio', items:[
+ {ic:'circle',n:'Falta de posição',r:'Sinal 13 · Positional fault',
+  d:'No instante do saque alguém estava fora da ordem: 1 atrás do 2, 6 atrás do 3, 5 atrás do 4; e 4 à esquerda de 3 à esquerda de 2, 5 à esquerda de 6 à esquerda de 1. Depois da batida no saque todos podem correr.',
+  s:'<b>Movimento circular com o dedo indicador</b>, apontado para baixo, na altura da cintura, uma ou duas voltas. Em seguida aponta os dois jogadores que estavam trocados.'},
+ {ic:'circle',n:'Falta de rodízio',r:'Sinal 13 · Rotational fault',
+  d:'Sacou quem não era da vez. Além do ponto, a equipe volta à ordem certa e perde os pontos feitos com a ordem errada.',
+  s:'O mesmo movimento circular com o indicador. Depois o árbitro confere a súmula para acertar a ordem.'}]},
+
+{g:'Rede e linha central', items:[
+ {ic:'netSide',n:'Toque na rede',r:'Sinal 19 · Net touched by player',
+  d:'Tocar a faixa superior da rede ou os 80 cm de antena durante a ação de jogar a bola. Tocar outra parte da rede, sem interferir no jogo, não é falta.',
+  s:'A mão <b>toca o topo da rede do lado de quem errou</b> — mão direita para o lado direito, esquerda para o esquerdo. Depois indica o jogador.'},
+ {ic:'netHand',n:'Invasão por cima',r:'Sinal 20 · Reaching beyond the net',
+  d:'Tocar a bola no espaço adversário antes do ataque deles, ou interferir por cima da rede.',
+  s:'Coloca o <b>antebraço acima da rede, palma para baixo</b>, sem tocar na rede, perpendicular a ela. Depois indica o jogador.'},
+ {ic:'line',n:'Invasão da linha central',r:'Sinal 22 · Penetration into the opponent court',
+  d:'Com o <b>pé</b>: só é permitido se parte do pé continuar tocando a linha central ou diretamente acima dela. <b>Pé inteiro do outro lado é falta na hora</b> — atrapalhando ou não, e com mais razão se caírem os dois. Com qualquer parte do corpo <b>acima dos pés</b> (mão, joelho, tronco), aí sim só é falta se atrapalhar o adversário. Passar por baixo da rede sem tocar a quadra deles também só é falta se atrapalhar.',
+  s:'<b>Aponta para a linha central</b> (ou para a linha em questão). É um sinal do 2º árbitro, que fica na altura da rede.'}]},
+
+{g:'Saque', items:[
+ {ic:'armUp',n:'Bola não lançada',r:'Sinal 10 · Ball not tossed at the service hit',
+  d:'O sacador bateu sem soltar a bola, ou pegou de volta para lançar de novo.',
+  s:'Levanta o <b>braço esticado</b> em diagonal, com a palma da mão para cima. Gesto firme e rápido — o de condução é o mesmo braço, mas dobrado e subindo devagar.'},
+ {ic:'eight',n:'Atraso no saque',r:'Sinal 11 · Delay in service',
+  d:'Passou dos 8 segundos entre o apito e a batida.',
+  s:'Levanta as duas mãos mostrando <b>oito dedos abertos</b> — os 8 segundos.'},
+ {ic:'line',n:'Falta de pé no saque',r:'Sinal 22 · Server touches the end line',
+  d:'Pisar na linha de fundo ou sair da zona de saque antes de bater na bola.',
+  s:'<b>Aponta para a linha</b> de fundo. O juiz de linha <b>balança a bandeirinha acima da cabeça</b> e aponta a linha.'},
+ {ic:'netSide',n:'Saque que não passa',r:'Sinal 19 · Served ball does not cross',
+  d:'A bola bateu na rede e não cruzou o plano vertical. Se tocar a rede e passar entre as antenas, o saque é válido.',
+  s:'Indica o <b>lado da rede</b> com a mão correspondente.'}]},
+
+{g:'Ataque e bloqueio', items:[
+ {ic:'downF',n:'Ataque irregular',r:'Sinal 21 · Attack hit fault',
+  d:'Jogador de fundo atacando acima da borda da rede à frente da linha de 3 m; ataque no saque adversário quando a bola está inteiramente acima da rede; líbero atacando acima da borda; ou bola atacada acima da rede depois de um levantamento de dedos do líbero dentro da zona de ataque.',
+  s:'<b>Movimento de cima para baixo com o antebraço</b>, mão aberta, começando na altura do ombro. Depois indica o jogador.'},
+ {ic:'out',n:'Falta de bloqueio',r:'Sinal 12 · Blocking fault',
+  d:'Jogador de fundo ou líbero participando do bloqueio, ou bloqueio no saque adversário.',
+  s:'Levanta os <b>dois braços esticados na vertical, palmas para a frente</b> — diferente do “bola fora”, que é só o antebraço com as palmas para dentro.'},
+ {ic:'out',n:'Barreira',r:'Sinal 12 · Screening',
+  d:'A equipe que saca esconde o sacador ou a trajetória da bola com um grupo de jogadores.',
+  s:'O mesmo sinal do bloqueio: dois braços na vertical, palmas para a frente.'}]},
+
+{g:'Conduta, atrasos e dupla falta', items:[
+ {ic:'card',n:'Advertência e punição',r:'Sinais 6a, 6b, 7 e 8 · Misconduct',
+  d:'Protesto, grosseria, conduta ofensiva ou agressão. A escala vai de advertência a punição (ponto para o adversário), expulsão (fora do set) e desqualificação (fora da partida).',
+  s:'<b>Amarelo</b> para advertência, <b>vermelho</b> para punição, os <b>dois juntos na mesma mão</b> para expulsão e <b>um em cada mão</b> para desqualificação. O cartão é mostrado com o braço erguido na direção de quem errou.'},
+ {ic:'wrist',n:'Atraso de jogo',r:'Sinal 25 · Delay warning / penalty',
+  d:'Demorar na substituição, retardar a volta ao jogo, pedir interrupção indevida.',
+  s:'<b>Cobre o próprio pulso com o cartão</b> — amarelo é advertência, vermelho é punição. É o pulso que diferencia do cartão por conduta.'},
+ {ic:'thumbs',n:'Dupla falta',r:'Sinal 23 · Double fault and replay',
+  d:'Os dois lados cometem falta ao mesmo tempo, ou a bola fica presa entre os bloqueios: a jogada é repetida.',
+  s:'Levanta os <b>dois polegares</b>, mãos fechadas, à frente do peito.'}]}
+];
+
+const FAULTS_BEACH=[
+{g:'Faltas de toque', open:true, items:[
+ {ic:'palmUp',n:'Condução',r:'Sinal oficial · Catch',
+  d:'Mesma regra da quadra, cobrada com mais rigor na areia: a bola tem que sair na hora, sem ser acompanhada.',
+  s:'O antebraço sobe <b>devagar</b>, à frente do peito, com a palma voltada para cima.'},
+ {ic:'two',n:'Dois toques',r:'Sinal oficial · Double contact',
+  d:'O mesmo jogador toca duas vezes seguidas. Na defesa de bola forte o duplo contato numa única ação é permitido, inclusive de dedos.',
+  s:'Levanta a mão com <b>dois dedos separados</b>, acima do ombro.'},
+ {ic:'four',n:'Quatro toques',r:'Sinal oficial · Four hits',
+  d:'A dupla tocou quatro vezes. Atenção: na areia o <b>toque do bloqueio conta</b> como o primeiro dos três.',
+  s:'Levanta a mão com <b>quatro dedos separados</b>.'},
+ {ic:'downF',n:'Largada de dedos (dedada)',r:'Sinal oficial · Attack hit fault',
+  d:'Dirigir a bola com as pontas dos dedos é falta. Para largar, use o nó dos dedos, a mão firme ou os dedos unidos e rígidos.',
+  s:'<b>Movimento de cima para baixo com o antebraço</b>, mão aberta — o sinal de falta de ataque.'},
+ {ic:'downF',n:'Levantamento de dedos por cima da rede',r:'Sinal oficial · Attack hit fault',
+  d:'Mandar a bola de dedos para o outro lado só vale se a trajetória sair <b>perpendicular à linha dos ombros</b>. Girar o corpo e jogar de lado é falta.',
+  s:'O mesmo sinal de falta de ataque: antebraço descendo, mão aberta.'},
+ {ic:'brush',n:'Bola tocada',r:'Sinal oficial · Ball touched',
+  d:'A bola saiu, mas encostou em alguém antes de sair.',
+  s:'Uma mão na <b>vertical</b> e a <b>palma da outra passando sobre os dedos</b> dela.'},
+ {ic:'out',n:'Bola fora',r:'Sinal oficial · Ball “out”',
+  d:'Caiu fora, tocou a antena ou passou por fora do espaço entre elas. A fita faz parte da quadra.',
+  s:'Os <b>dois antebraços na vertical</b>, mãos abertas, <b>palmas para o próprio corpo</b>.'},
+ {ic:'inn',n:'Bola dentro',r:'Sinal oficial · Ball “in”',
+  d:'Caiu na quadra, incluindo em cima da fita.',
+  s:'Estende o braço e <b>aponta os dedos para o chão</b>.'}]},
+
+{g:'Saque', items:[
+ {ic:'circle',n:'Falta de ordem de saque',r:'Sinal oficial · Wrong server',
+  d:'Sacou quem não era da vez. Na areia não há zonas nem rodízio: a única ordem obrigatória é a alternância de quem saca dentro do set.',
+  s:'<b>Movimento circular com o dedo indicador</b>, apontado para baixo, na altura da cintura.'},
+ {ic:'armUp',n:'Bola não lançada',r:'Sinal oficial · Ball not tossed',
+  d:'O sacador bateu sem soltar a bola, ou pegou de volta para lançar de novo.',
+  s:'Levanta o <b>braço esticado</b> com a palma para cima.'},
+ {ic:'eight',n:'Atraso no saque',r:'Sinal oficial · Delay in service',
+  d:'Na areia são <b>5 segundos</b> entre o apito e a batida, não 8.',
+  s:'O árbitro levanta os <b>dedos abertos</b> indicando o atraso no saque.'},
+ {ic:'line',n:'Falta de pé no saque',r:'Sinal oficial · Foot fault',
+  d:'Pisar na fita de fundo ou sair da zona de saque antes de bater.',
+  s:'<b>Aponta para a linha</b>; o juiz de linha balança a bandeirinha acima da cabeça e aponta.'},
+ {ic:'netSide',n:'Saque que não passa',r:'Sinal oficial · Served ball does not cross',
+  d:'Bateu na rede e não cruzou. Tocando a rede e passando entre as antenas, é válido.',
+  s:'Indica o <b>lado da rede</b> com a mão correspondente.'}]},
+
+{g:'Rede e invasão', items:[
+ {ic:'netSide',n:'Toque na rede',r:'Sinal oficial · Net touched by player',
+  d:'Tocar a rede entre as antenas durante a ação de jogar a bola.',
+  s:'A mão <b>toca o topo da rede do lado de quem errou</b>.'},
+ {ic:'netHand',n:'Invasão por cima',r:'Sinal oficial · Reaching beyond the net',
+  d:'Tocar a bola no espaço adversário antes do ataque deles.',
+  s:'<b>Antebraço acima da rede, palma para baixo</b>, sem tocar nela.'},
+ {ic:'line',n:'Interferência por baixo',r:'Sinal oficial · Penetration',
+  d:'Na areia <b>não existe linha central</b>: pode passar por baixo e até pisar do outro lado, desde que não atrapalhe o adversário. É a diferença em relação à quadra, onde o pé inteiro do outro lado já é falta.',
+  s:'<b>Aponta para o espaço embaixo da rede</b>, no lado de quem invadiu.'}]},
+
+{g:'Ataque e bloqueio', items:[
+ {ic:'downF',n:'Ataque irregular',r:'Sinal oficial · Attack hit fault',
+  d:'Atacar o saque adversário quando a bola está inteiramente acima da borda da rede.',
+  s:'<b>Movimento de cima para baixo com o antebraço</b>, mão aberta.'},
+ {ic:'out',n:'Falta de bloqueio',r:'Sinal oficial · Blocking fault',
+  d:'Bloquear o saque adversário. Fora isso, os dois jogadores podem bloquear de qualquer lugar — não existe restrição de fundo.',
+  s:'<b>Dois braços esticados na vertical, palmas para a frente</b>.'}]},
+
+{g:'Conduta, atrasos e dupla falta', items:[
+ {ic:'card',n:'Advertência e punição',r:'Sinais oficiais · Misconduct',
+  d:'Protesto, grosseria, conduta ofensiva — mesma escala da quadra.',
+  s:'<b>Amarelo</b> advertência, <b>vermelho</b> punição, os <b>dois juntos</b> expulsão, <b>um em cada mão</b> desqualificação.'},
+ {ic:'wrist',n:'Atraso de jogo',r:'Sinal oficial · Delay warning / penalty',
+  d:'Retardar a volta ao jogo ou pedir interrupção indevida.',
+  s:'<b>Cobre o pulso com o cartão</b>, amarelo ou vermelho.'},
+ {ic:'thumbs',n:'Dupla falta',r:'Sinal oficial · Double fault and replay',
+  d:'Os dois lados erram ao mesmo tempo: a jogada é repetida.',
+  s:'Levanta os <b>dois polegares</b> à frente do peito.'}]}
+];
+
+function renderLearn(){
+  const beach=state.surface==='beach';
+  $('#v-learn').innerHTML=
+    `<p class="hint" style="text-align:center;margin:0 0 12px">Faltas ${beach?'do vôlei de praia':'do vôlei de quadra'} e o sinal que o árbitro faz em cada uma.</p>`
+    + faultHTML(beach?FAULTS_BEACH:FAULTS_INDOOR)
+    + `<details style="margin-top:9px"><summary>Instalar no celular</summary><div class="body">
+       <p><b>Android / Chrome:</b> menu ⋮ → “Adicionar à tela inicial”.</p>
+       <p><b>iPhone / Safari:</b> Compartilhar → “Adicionar à Tela de Início”.</p>
+       <p style="margin:0">Depois disso o app abre em tela cheia e funciona sem internet.</p></div></details>`;
+}
+
+/* =========================================================
+   navegação + PWA
+   ========================================================= */
+$('#tabs').onclick=e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  $$('#tabs button').forEach(x=>x.setAttribute('aria-selected',String(x===b)));
+  $('#v-quadra').hidden=b.dataset.v!=='quadra';
+  $('#v-rot').hidden=b.dataset.v!=='rot';
+  $('#v-learn').hidden=b.dataset.v!=='learn';
+  if(b.dataset.v==='rot'){ state.surface==='beach'?renderBeach():renderRot(false);
+    setTimeout(()=>state.surface==='beach'?renderBeach():renderRot(false),40); }
+  if(b.dataset.v==='quadra')setTimeout(sizeStage,30);
+  window.scrollTo(0,0);
+};
+
+function iconDataURL(size){
+  const c=document.createElement('canvas');c.width=c.height=size;const x=c.getContext('2d');
+  x.fillStyle='#0F151B';x.fillRect(0,0,size,size);
+  const m=size*.16;
+  x.fillStyle='#17697F';x.fillRect(m,m*1.4,size-2*m,size-2.8*m);
+  x.strokeStyle='#fff';x.lineWidth=size*.022;x.strokeRect(m,m*1.4,size-2*m,size-2.8*m);
+  x.beginPath();x.moveTo(m,size/2);x.lineTo(size-m,size/2);x.lineWidth=size*.045;x.strokeStyle='#F2C230';x.stroke();
+  x.beginPath();x.arc(size*.68,size*.35,size*.07,0,7);x.fillStyle='#F2C230';x.fill();
+  return c.toDataURL('image/png');
+}
+/* Hospedado (http/https): usa o manifesto e o service worker de verdade.
+   Aberto como arquivo local: gera manifesto e ícone na hora, para instalar mesmo assim. */
+const hosted=location.protocol==='http:'||location.protocol==='https:';
+try{
+  const l=document.createElement('link'); l.rel='manifest';
+  if(hosted){ l.href='manifest.webmanifest'; }
+  else{
+    const man={name:'Quadra — prancheta de vôlei',short_name:'Quadra',start_url:'.',scope:'.',
+      display:'standalone',orientation:'any',background_color:'#0F151B',theme_color:'#0F151B',
+      icons:[{src:iconDataURL(192),sizes:'192x192',type:'image/png',purpose:'any'},
+             {src:iconDataURL(512),sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+    l.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'}));
+  }
+  document.head.appendChild(l);
+  const ai=document.createElement('link'); ai.rel='apple-touch-icon';
+  ai.href=hosted?'icon-192.png':iconDataURL(180); document.head.appendChild(ai);
+}catch(e){}
+if('serviceWorker' in navigator && hosted){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+/* boot */
+countBtns($('#cntA'),'A'); countBtns($('#cntB'),'B');
+state.land=window.innerWidth>=900;
+state.frames=[{toks:defaultTokens(),strokes:[]}];
+renderFrames(); listPlays(); buildRotBar(); updateUndo();
+store.get('surface').then(sf=>setSurface(sf==='beach'?'beach':'indoor'));
+function flipStrokes(toLand){
+  state.frames.forEach(f=>f.strokes.forEach(s=>{
+    s.pts=s.pts.map(q=>toLand?[q[1],1-q[0]]:[1-q[1],q[0]]);
+  }));
+}
+let lastWide=window.innerWidth>=900;
+window.addEventListener('resize',()=>{
+  const w=window.innerWidth>=900;
+  if(w!==lastWide){
+    lastWide=w; flipStrokes(w); state.land=w; renderLearn(); buildCourt(); syncTool();
+  }
+  sizeStage();
+  if(!$('#v-rot').hidden){ state.surface==='beach'?renderBeach():renderRot(false); }
+});
+window.addEventListener('orientationchange',()=>setTimeout(sizeStage,250));
+new ResizeObserver(()=>resizeCanvas()).observe($('#stage'));
+</script>
+</body>
+</html>
